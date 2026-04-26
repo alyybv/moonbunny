@@ -116,6 +116,7 @@
 
   function playTone(noteIndex) {
     const ctx = getCtx();
+    if (ctx.state === 'suspended') ctx.resume();
     const freq = frequencies[noteIndex];
 
     // Two slightly detuned oscillators for warmth
