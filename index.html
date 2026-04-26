@@ -53,11 +53,11 @@
       opacity: 0;
     }
 
-    .icon:hover img.default-img {
+    .icon.active img.default-img {
       opacity: 0;
     }
 
-    .icon:hover img.hover-img {
+    .icon.active img.hover-img {
       opacity: 1;
     }
   </style>
@@ -104,9 +104,7 @@
 </div>
 
 <script>
-  // Pentatonic scale across two octaves — dreamy, harmonic, no dissonance
   const frequencies = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
-
   let audioCtx = null;
 
   function getCtx() {
@@ -116,38 +114,37 @@
 
   function playTone(noteIndex) {
     const ctx = getCtx();
-    if (ctx.state === 'suspended') ctx.resume();
-    const freq = frequencies[noteIndex];
+    ctx.resume().then(() => {
+      const freq = frequencies[noteIndex];
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-    // Two slightly detuned oscillators for warmth
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc2.frequency.setValueAtTime(freq * 1.005, ctx.currentTime);
 
-    osc1.type = 'sine';
-    osc2.type = 'sine';
-    osc1.frequency.setValueAtTime(freq, ctx.currentTime);
-    osc2.frequency.setValueAtTime(freq * 1.005, ctx.currentTime); // slight detune
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
-    osc1.connect(gainNode);
-    osc2.connect(gainNode);
-    gainNode.connect(ctx.destination);
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.08);
+      gainNode.gain.setValueAtTime(0.18, ctx.currentTime + 0.3);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
 
-    // Soft attack, hold, gentle fade
-    gainNode.gain.setValueAtTime(0, ctx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.08);
-    gainNode.gain.setValueAtTime(0.18, ctx.currentTime + 0.3);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-
-    osc1.start(ctx.currentTime);
-    osc2.start(ctx.currentTime);
-    osc1.stop(ctx.currentTime + 1.2);
-    osc2.stop(ctx.currentTime + 1.2);
+      osc1.start(ctx.currentTime);
+      osc2.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 1.2);
+      osc2.stop(ctx.currentTime + 1.2);
+    });
   }
 
   document.querySelectorAll('.icon').forEach(icon => {
-    icon.addEventListener('mouseenter', () => {
+    icon.addEventListener('click', () => {
       const note = parseInt(icon.dataset.note);
+      icon.classList.toggle('active');
       playTone(note);
     });
   });
