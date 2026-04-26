@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dream</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background-color: #1f3453;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+      padding: 48px;
+    }
+
+    .icon {
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity 0.25s ease;
+      position: absolute;
+    }
+
+    .icon img.hover-img {
+      opacity: 0;
+    }
+
+    .icon:hover img.default-img {
+      opacity: 0;
+    }
+
+    .icon:hover img.hover-img {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="grid">
+  <div class="icon" data-note="0">
+    <img class="default-img" src="1.svg" alt="">
+    <img class="hover-img" src="1_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="1">
+    <img class="default-img" src="2.svg" alt="">
+    <img class="hover-img" src="2_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="2">
+    <img class="default-img" src="3.svg" alt="">
+    <img class="hover-img" src="3_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="3">
+    <img class="default-img" src="4.svg" alt="">
+    <img class="hover-img" src="4_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="4">
+    <img class="default-img" src="5.svg" alt="">
+    <img class="hover-img" src="5_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="5">
+    <img class="default-img" src="6.svg" alt="">
+    <img class="hover-img" src="6_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="6">
+    <img class="default-img" src="7.svg" alt="">
+    <img class="hover-img" src="7_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="7">
+    <img class="default-img" src="8.svg" alt="">
+    <img class="hover-img" src="8_hover.svg" alt="">
+  </div>
+  <div class="icon" data-note="8">
+    <img class="default-img" src="9.svg" alt="">
+    <img class="hover-img" src="9_hover.svg" alt="">
+  </div>
+</div>
+
+<script>
+  // Pentatonic scale across two octaves — dreamy, harmonic, no dissonance
+  const frequencies = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
+
+  let audioCtx = null;
+
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playTone(noteIndex) {
+    const ctx = getCtx();
+    const freq = frequencies[noteIndex];
+
+    // Two slightly detuned oscillators for warmth
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc2.frequency.setValueAtTime(freq * 1.005, ctx.currentTime); // slight detune
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    // Soft attack, hold, gentle fade
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.08);
+    gainNode.gain.setValueAtTime(0.18, ctx.currentTime + 0.3);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 1.2);
+    osc2.stop(ctx.currentTime + 1.2);
+  }
+
+  document.querySelectorAll('.icon').forEach(icon => {
+    icon.addEventListener('mouseenter', () => {
+      const note = parseInt(icon.dataset.note);
+      playTone(note);
+    });
+  });
+</script>
+
+</body>
+</html>
